@@ -25,7 +25,8 @@ import joblib
 import pandas as pd
 from fastapi import FastAPI, HTTPException, UploadFile, File, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
 
 import predictor
 from schemas import (
@@ -137,20 +138,21 @@ app.add_middleware(
 #  ROUTES
 # ════════════════════════════════════════════════════════════════════════════
 
-@app.get("/", tags=["Info"])
+@app.get("/", response_class=HTMLResponse, tags=["UI"])
 async def root():
+    """Serve the web interface."""
+    index = os.path.join(os.path.dirname(__file__), "static", "index.html")
+    with open(index) as f:
+        return f.read()
+
+@app.get("/api", tags=["Info"])
+async def api_info():
+    """API metadata (JSON).""", 
     return {
-        "api"         : "AMR Resistance Predictor",
-        "version"     : "1.0.0",
-        "docs"        : "/docs",
-        "health"      : "/health",
-        "endpoints"   : {
-            "single_sample"    : "POST /predict/sample",
-            "organism_profile" : "POST /predict/organism",
-            "batch_csv"        : "POST /predict/batch",
-            "list_organisms"   : "GET  /organisms",
-            "list_antibiotics" : "GET  /antibiotics",
-        },
+        "api"     : "AMR Resistance Predictor",
+        "version" : "1.0.0",
+        "docs"    : "/docs",
+        "ui"      : "/",
         "advisory": (
             "This API is a clinical decision-support tool. "
             "Predictions must be confirmed by laboratory testing."
